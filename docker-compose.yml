@@ -1,20 +1,38 @@
 services:
   postgres:
     image: postgis/postgis:16-3.4
-    container_name: marti-location-postgres
     environment:
-      POSTGRES_USER: marti
-      POSTGRES_PASSWORD: marti
-      POSTGRES_DB: marti_location
+      POSTGRES_USER: ${DATABASE_USER:?DATABASE_USER is required}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?DATABASE_PASSWORD is required}
+      POSTGRES_DB: ${DATABASE_NAME:?DATABASE_NAME is required}
     ports:
-      - '5432:5432'
+      - '127.0.0.1:${DATABASE_PORT:?DATABASE_PORT is required}:5432'
     volumes:
       - marti_pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U marti -d marti_location']
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -h 127.0.0.1',
+        ]
       interval: 5s
       timeout: 5s
       retries: 10
+      start_period: 10s
+
+  api:
+    build: .
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      DATABASE_HOST: postgres
+      DATABASE_PORT: '5432'
+    ports:
+      - '127.0.0.1:${PORT:?PORT is required}:${PORT:?PORT is required}'
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   marti_pgdata:
