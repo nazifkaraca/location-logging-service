@@ -72,6 +72,8 @@ curl -s 'http://127.0.0.1:43123/logs?userId=ali' \
 
 ## Tests / load
 
+`npm test` runs on every push and pull request (GitHub Actions). E2E and k6 stay local; they need PostGIS.
+
 ```bash
 npm test
 npm run test:e2e
