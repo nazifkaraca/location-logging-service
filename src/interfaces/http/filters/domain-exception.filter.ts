@@ -4,7 +4,7 @@ import {
   ExceptionFilter,
   HttpStatus,
 } from '@nestjs/common';
-import { Response } from 'express';
+import type { Response } from 'express';
 import { InvalidPolygonError } from '../../../domain/errors/invalid-polygon.error';
 
 @Catch(InvalidPolygonError)
