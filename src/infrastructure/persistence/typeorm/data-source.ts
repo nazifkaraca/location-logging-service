@@ -6,6 +6,7 @@ import { AreaOrmEntity } from './entities/area.orm-entity';
 import { AreaEntryLogOrmEntity } from './entities/area-entry-log.orm-entity';
 import { UserAreaPresenceOrmEntity } from './entities/user-area-presence.orm-entity';
 import { InitPostgis1730000000000 } from './migrations/1730000000000-InitPostgis';
+import { AreaEntryLogsAreaId1730000000001 } from './migrations/1730000000001-AreaEntryLogsAreaId';
 
 loadDotenv({ quiet: true });
 
@@ -22,7 +23,7 @@ export function typeOrmOptions(
     password: app.database.password,
     database: app.database.name,
     entities: [AreaOrmEntity, UserAreaPresenceOrmEntity, AreaEntryLogOrmEntity],
-    migrations: [InitPostgis1730000000000],
+    migrations: [InitPostgis1730000000000, AreaEntryLogsAreaId1730000000001],
     migrationsRun: true,
     synchronize: false,
     logging: app.database.logging,
