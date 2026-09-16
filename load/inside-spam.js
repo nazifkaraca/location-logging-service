@@ -35,7 +35,7 @@ export function insideSpam(data) {
       latitude: 40.995,
       longitude: 29.045,
     }),
-    { headers: { 'Content-Type': 'application/json' } },
+    { headers: { 'Content-Type': 'application/json', 'X-API-Key': API_KEY } },
   );
   check(res, {
     'status is 200': (r) => r.status === 200,

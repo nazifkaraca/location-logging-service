@@ -2,6 +2,7 @@ import http from 'k6/http';
 import { check } from 'k6';
 
 const BASE = __ENV.BASE_URL || 'http://127.0.0.1:43123';
+const API_KEY = __ENV.API_KEY || 'dev-local-key';
 
 export const options = {
   scenarios: {
@@ -29,7 +30,7 @@ export function firstEnter() {
       latitude: 40.995,
       longitude: 29.045,
     }),
-    { headers: { 'Content-Type': 'application/json' } },
+    { headers: { 'Content-Type': 'application/json', 'X-API-Key': API_KEY } },
   );
   check(res, {
     'status is 200': (r) => r.status === 200,

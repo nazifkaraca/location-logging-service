@@ -7,11 +7,11 @@ Stack: NestJS, TypeScript, PostgreSQL + PostGIS, TypeORM.
 ## What it does
 
 - **Areas.** `POST /areas` adds a GeoJSON polygon (`[lng, lat]`, closed ring). Areas may overlap; each overlap is counted on its own.
-- **Pings.** `POST /locations` takes `{ userId, latitude, longitude }`. No users table; `userId` is a string, max 128 chars. Ingest stays unauthenticated so devices can ping.
+- **Pings.** `POST /locations` takes `{ userId, latitude, longitude }`. No users table; `userId` is a string, max 128 chars. Requires `X-API-Key`. Same IP is capped at 200 pings/second.
 - **Enter only.** If the point lands inside a polygon the user was not already in (boundary counts), one row is written: `userId`, `areaId`, `entered_at`. Further pings while still inside do nothing. Leaving clears presence; there is no exit log.
 - **Logs.** `GET /logs` filters by user, area, time range, and page. Always `entered_at DESC`.
 - **Health.** `GET /health` checks Postgres and the PostGIS extension. HTTP 200 only when both are up; otherwise 503 and `{ status: "degraded", ... }`.
-- **Admin key.** `POST/GET /areas` and `GET /logs` require `X-API-Key`. `POST /locations` stays open for device pings.
+- **API key.** `POST /locations`, `POST/GET /areas` and `GET /logs` require `X-API-Key`. `GET /health` stays open.
 
 Raw pings are not stored, so spam while inside stays cheap: a spatial query and a presence read, usually no insert. Concurrent first-enters for the same user cannot double-log: presence is unique, and the log row is written only if that insert wins.
 
@@ -46,10 +46,12 @@ Kadıköy is roughly `29.01–29.08` lng, `40.975–41.02` lat. First request is
 ```bash
 curl -s -X POST http://127.0.0.1:43123/locations \
   -H 'Content-Type: application/json' \
+  -H 'X-API-Key: dev-local-key' \
   -d '{"userId":"ali","latitude":40.995,"longitude":29.045}'
 
 curl -s -X POST http://127.0.0.1:43123/locations \
   -H 'Content-Type: application/json' \
+  -H 'X-API-Key: dev-local-key' \
   -d '{"userId":"ali","latitude":40.996,"longitude":29.046}'
 
 curl -s 'http://127.0.0.1:43123/logs?userId=ali' \

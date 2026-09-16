@@ -59,6 +59,7 @@ describe('Martı Location Logging API (e2e)', () => {
   async function ping(userId: string, latitude: number, longitude: number) {
     const response = await api()
       .post('/locations')
+      .set('X-API-Key', 'test-api-key')
       .send({ userId, latitude, longitude })
       .expect(200);
     return response.body as {
@@ -76,12 +77,16 @@ describe('Martı Location Logging API (e2e)', () => {
     return (response.body as { total: number }).total;
   }
 
-  it('rejects admin routes without X-API-Key', async () => {
+  it('rejects admin and ingest routes without X-API-Key', async () => {
     await api().get('/logs').expect(401);
     await api().get('/areas').expect(401);
     await api()
       .post('/areas')
       .send({ name: 'x', polygon: boundingBoxPolygon(29, 41, 29.1, 41.1) })
+      .expect(401);
+    await api()
+      .post('/locations')
+      .send({ userId: 'ali', latitude: 41.05, longitude: 29.05 })
       .expect(401);
   });
 
@@ -180,6 +185,7 @@ describe('Martı Location Logging API (e2e)', () => {
       Array.from({ length: 20 }, () =>
         api()
           .post('/locations')
+          .set('X-API-Key', 'test-api-key')
           .send({ userId: 'race', latitude: 41.05, longitude: 29.05 }),
       ),
     );
