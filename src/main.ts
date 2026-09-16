@@ -13,9 +13,13 @@ async function bootstrap() {
   const swagger = new DocumentBuilder()
     .setTitle('Martı Location Logging API')
     .setDescription(
-      'Enter-only geofence logging. A ping is written to logs only when a user first enters a defined polygon. Subsequent pings while still inside are a no-op. Raw pings are not stored.',
+      'Enter-only geofence logging. A ping is written to logs only when a user first enters a defined polygon. Subsequent pings while still inside are a no-op. Raw pings are not stored. If API_KEY is set, /areas and /logs require header X-API-Key. POST /locations and GET /health stay open.',
     )
     .setVersion('1.0.0')
+    .addApiKey(
+      { type: 'apiKey', name: 'X-API-Key', in: 'header' },
+      'apiKey',
+    )
     .build();
   const document = SwaggerModule.createDocument(app, swagger);
   SwaggerModule.setup('docs', app, document);

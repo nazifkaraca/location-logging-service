@@ -1,11 +1,21 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import {
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiSecurity,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { CreateAreaUseCase } from '../../application/use-cases/create-area.use-case';
 import { ListAreasUseCase } from '../../application/use-cases/list-areas.use-case';
 import { AreaResponseDto } from './dto/area-response.dto';
 import { CreateAreaDto } from './dto/create-area.dto';
+import { AdminApiKeyGuard } from './guards/admin-api-key.guard';
 
 @ApiTags('areas')
+@ApiSecurity('apiKey')
+@ApiUnauthorizedResponse()
+@UseGuards(AdminApiKeyGuard)
 @Controller('areas')
 export class AreasController {
   constructor(

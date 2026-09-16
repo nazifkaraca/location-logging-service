@@ -25,5 +25,11 @@ describe('loadAppConfig', () => {
     expect(app.database.poolMax).toBe(30);
     expect(app.seedOnBoot).toBe(false);
     expect(app.port).toBe(43123);
+    expect(app.apiKey).toBeUndefined();
+  });
+
+  it('reads API_KEY when set', () => {
+    const app = loadAppConfig(from({ ...required, API_KEY: 'secret-token' }));
+    expect(app.apiKey).toBe('secret-token');
   });
 });
