@@ -7,7 +7,10 @@ import { HttpModule } from './interfaces/http/http.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: ['.env', '.env.example'],
+    }),
     PersistenceModule,
     ApplicationModule,
     HttpModule,

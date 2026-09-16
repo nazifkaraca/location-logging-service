@@ -1,5 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { DataSource, DataSourceOptions } from 'typeorm';
+import { loadAppConfig } from '../../config/env';
 import { AreaOrmEntity } from './entities/area.orm-entity';
 import { AreaEntryLogOrmEntity } from './entities/area-entry-log.orm-entity';
 import { UserAreaPresenceOrmEntity } from './entities/user-area-presence.orm-entity';
@@ -9,20 +10,21 @@ export function typeOrmOptions(
   config: ConfigService,
   overrides: Partial<DataSourceOptions> = {},
 ): DataSourceOptions {
+  const app = loadAppConfig(config);
   return {
     type: 'postgres',
-    host: config.get<string>('DATABASE_HOST', 'localhost'),
-    port: Number(config.get('DATABASE_PORT', 5432)),
-    username: config.get<string>('DATABASE_USER', 'marti'),
-    password: config.get<string>('DATABASE_PASSWORD', 'marti'),
-    database: config.get<string>('DATABASE_NAME', 'marti_location'),
+    host: app.database.host,
+    port: app.database.port,
+    username: app.database.user,
+    password: app.database.password,
+    database: app.database.name,
     entities: [AreaOrmEntity, UserAreaPresenceOrmEntity, AreaEntryLogOrmEntity],
     migrations: [InitPostgis1730000000000],
     migrationsRun: true,
     synchronize: false,
-    logging: false,
+    logging: app.database.logging,
     extra: {
-      max: 30,
+      max: app.database.poolMax,
     },
     ...overrides,
   } as DataSourceOptions;

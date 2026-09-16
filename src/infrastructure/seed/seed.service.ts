@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { CreateAreaUseCase } from '../../application/use-cases/create-area.use-case';
 import { ListAreasUseCase } from '../../application/use-cases/list-areas.use-case';
 import { boundingBoxPolygon } from '../../domain/geo/polygon';
+import { loadAppConfig } from '../config/env';
 
 export const ISTANBUL_SEED = [
   {
@@ -34,7 +35,7 @@ export class SeedService implements OnModuleInit {
   ) {}
 
   async onModuleInit(): Promise<void> {
-    if (this.config.get('SEED_ON_BOOT') !== 'true') {
+    if (!loadAppConfig(this.config).seedOnBoot) {
       return;
     }
     await this.seedIfEmpty();
