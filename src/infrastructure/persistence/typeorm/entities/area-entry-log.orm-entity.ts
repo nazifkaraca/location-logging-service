@@ -12,6 +12,7 @@ import { AreaOrmEntity } from './area.orm-entity';
 @Entity({ name: 'area_entry_logs' })
 @Index('area_entry_logs_entered_at_idx', ['enteredAt'])
 @Index('area_entry_logs_user_entered_idx', ['userId', 'enteredAt'])
+@Index('area_entry_logs_area_entered_idx', ['areaId', 'enteredAt'])
 export class AreaEntryLogOrmEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
