@@ -8,19 +8,23 @@ class InMemoryGeofence implements GeofenceUnitOfWork {
   containing = new Set<string>();
   presence = new Map<string, Set<string>>();
   logs: Array<{ userId: string; areaId: string }> = [];
+  forcePresenceConflict = false;
 
-  async withUserLock<T>(
-    userId: string,
+  async runInTransaction<T>(
     work: (session: GeofenceSession) => Promise<T>,
   ): Promise<T> {
     const session: GeofenceSession = {
       findContainingAreaIds: async () => [...this.containing],
       listPresence: async (id) => [...(this.presence.get(id) ?? [])],
       recordEnter: async (id, areaId) => {
+        if (this.forcePresenceConflict) {
+          return false;
+        }
         this.logs.push({ userId: id, areaId });
         const set = this.presence.get(id) ?? new Set<string>();
         set.add(areaId);
         this.presence.set(id, set);
+        return true;
       },
       clearPresence: async (id, areaIds) => {
         const set = this.presence.get(id) ?? new Set<string>();
@@ -76,5 +80,21 @@ describe('IngestLocationUseCase', () => {
     expect(left.enteredAreaIds).toEqual([]);
     expect(left.containedAreaIds).toEqual([]);
     expect(geofence.logs).toHaveLength(1);
+  });
+
+  it('does not report an enter when presence insert loses the race', async () => {
+    const geofence = new InMemoryGeofence();
+    geofence.containing.add('kadikoy');
+    geofence.forcePresenceConflict = true;
+    const useCase = new IngestLocationUseCase(geofence);
+
+    const result = await useCase.execute({
+      userId: 'ali',
+      latitude: 40.99,
+      longitude: 29.03,
+    });
+
+    expect(result.enteredAreaIds).toEqual([]);
+    expect(geofence.logs).toHaveLength(0);
   });
 });

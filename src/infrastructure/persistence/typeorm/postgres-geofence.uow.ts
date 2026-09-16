@@ -34,7 +34,21 @@ class PostgresGeofenceSession implements GeofenceSession {
     return rows.map((row) => row.area_id);
   }
 
-  async recordEnter(userId: string, areaId: string): Promise<void> {
+  async recordEnter(userId: string, areaId: string): Promise<boolean> {
+    const inserted = (await this.manager.query(
+      `
+      INSERT INTO user_area_presence (user_id, area_id)
+      VALUES ($1, $2)
+      ON CONFLICT (user_id, area_id) DO NOTHING
+      RETURNING area_id
+      `,
+      [userId, areaId],
+    )) as Array<{ area_id: string }>;
+
+    if (inserted.length === 0) {
+      return false;
+    }
+
     await this.manager.query(
       `
       INSERT INTO area_entry_logs (user_id, area_id, entered_at)
@@ -42,14 +56,7 @@ class PostgresGeofenceSession implements GeofenceSession {
       `,
       [userId, areaId],
     );
-    await this.manager.query(
-      `
-      INSERT INTO user_area_presence (user_id, area_id)
-      VALUES ($1, $2)
-      ON CONFLICT (user_id, area_id) DO NOTHING
-      `,
-      [userId, areaId],
-    );
+    return true;
   }
 
   async clearPresence(userId: string, areaIds: string[]): Promise<void> {
@@ -67,16 +74,11 @@ class PostgresGeofenceSession implements GeofenceSession {
 export class PostgresGeofenceUnitOfWork implements GeofenceUnitOfWork {
   constructor(private readonly dataSource: DataSource) {}
 
-  withUserLock<T>(
-    userId: string,
+  runInTransaction<T>(
     work: (session: GeofenceSession) => Promise<T>,
   ): Promise<T> {
-    return this.dataSource.transaction(async (manager) => {
-      await manager.query(
-        `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`,
-        [userId],
-      );
-      return work(new PostgresGeofenceSession(manager));
-    });
+    return this.dataSource.transaction(async (manager) =>
+      work(new PostgresGeofenceSession(manager)),
+    );
   }
 }

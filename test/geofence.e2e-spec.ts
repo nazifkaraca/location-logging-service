@@ -175,4 +175,17 @@ describe('Martı Location Logging API (e2e)', () => {
     expect(entered[0].body.enteredAreaIds).toEqual([area.id]);
     expect(await logCount('race')).toBe(1);
   });
+
+  it('keeps the parent enter when leaving a nested area', async () => {
+    const kadikoy = await createSquare('Kadıköy', 29.01, 40.975, 29.08, 41.02);
+    const moda = await createSquare('Moda', 29.022, 40.978, 29.04, 40.99);
+
+    const both = await ping('ali', 40.984, 29.03);
+    expect(both.enteredAreaIds.sort()).toEqual([kadikoy.id, moda.id].sort());
+
+    const parentOnly = await ping('ali', 41.0, 29.05);
+    expect(parentOnly.containedAreaIds).toEqual([kadikoy.id]);
+    expect(parentOnly.enteredAreaIds).toEqual([]);
+    expect(await logCount('ali')).toBe(2);
+  });
 });

@@ -1,13 +1,13 @@
 export interface GeofenceSession {
   findContainingAreaIds(longitude: number, latitude: number): Promise<string[]>;
   listPresence(userId: string): Promise<string[]>;
-  recordEnter(userId: string, areaId: string): Promise<void>;
+  /** True when this ping created presence (and therefore a log). */
+  recordEnter(userId: string, areaId: string): Promise<boolean>;
   clearPresence(userId: string, areaIds: string[]): Promise<void>;
 }
 
 export interface GeofenceUnitOfWork {
-  withUserLock<T>(
-    userId: string,
+  runInTransaction<T>(
     work: (session: GeofenceSession) => Promise<T>,
   ): Promise<T>;
 }

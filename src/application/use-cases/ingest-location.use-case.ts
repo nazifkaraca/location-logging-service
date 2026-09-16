@@ -6,7 +6,7 @@ export class IngestLocationUseCase {
   constructor(private readonly geofence: GeofenceUnitOfWork) {}
 
   execute(ping: LocationPing): Promise<LocationIngestResult> {
-    return this.geofence.withUserLock(ping.userId, async (session) => {
+    return this.geofence.runInTransaction(async (session) => {
       const containingIds = await session.findContainingAreaIds(
         ping.longitude,
         ping.latitude,
@@ -21,8 +21,11 @@ export class IngestLocationUseCase {
         };
       }
 
+      const recorded: string[] = [];
       for (const areaId of entered) {
-        await session.recordEnter(ping.userId, areaId);
+        if (await session.recordEnter(ping.userId, areaId)) {
+          recorded.push(areaId);
+        }
       }
 
       if (exited.length > 0) {
@@ -31,7 +34,7 @@ export class IngestLocationUseCase {
 
       return {
         containedAreaIds: sortedIds(containingIds),
-        enteredAreaIds: sortedIds(entered),
+        enteredAreaIds: sortedIds(recorded),
       };
     });
   }
