@@ -21,3 +21,5 @@ npm-debug.log*
 # local artifacts
 /uploads
 k6-results.json
+
+/graphify-out

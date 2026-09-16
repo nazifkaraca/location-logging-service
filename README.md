@@ -7,12 +7,13 @@ Stack: NestJS, TypeScript, PostgreSQL + PostGIS, TypeORM.
 ## What it does
 
 - **Areas.** `POST /areas` adds a GeoJSON polygon (`[lng, lat]`, closed ring). Areas may overlap; each overlap is counted on its own.
-- **Pings.** `POST /locations` takes `{ userId, latitude, longitude }`. No users table and no auth; `userId` is just a string, max 128 chars.
+- **Pings.** `POST /locations` takes `{ userId, latitude, longitude }`. No users table; `userId` is a string, max 128 chars. Ingest stays unauthenticated so devices can ping.
 - **Enter only.** If the point lands inside a polygon the user was not already in (boundary counts), one row is written: `userId`, `areaId`, `entered_at`. Further pings while still inside do nothing. Leaving clears presence; there is no exit log.
 - **Logs.** `GET /logs` filters by user, area, time range, and page. Always `entered_at DESC`.
-- **Health.** `GET /health` checks Postgres and the PostGIS extension.
+- **Health.** `GET /health` checks Postgres and the PostGIS extension. HTTP 200 only when both are up; otherwise 503 and `{ status: "degraded", ... }`.
+- **Admin key.** If `API_KEY` is set, `POST/GET /areas` and `GET /logs` require `X-API-Key`. `POST /locations` stays open for device pings.
 
-Raw pings are not stored, so spam while inside stays cheap: a spatial query and a presence read, usually no insert. Concurrent requests for the same `userId` take an advisory lock so you do not get double enters.
+Raw pings are not stored, so spam while inside stays cheap: a spatial query and a presence read, usually no insert. Concurrent first-enters for the same user cannot double-log: presence is unique, and the log row is written only if that insert wins.
 
 Full request/response shapes: http://127.0.0.1:43123/docs
 
@@ -64,7 +65,7 @@ curl -s 'http://127.0.0.1:43123/logs?userId=ali'
 | `GET` | `/logs` | `userId`, `areaId`, `from`, `to`, `page`, `limit` |
 | `POST` | `/areas` | `{ name, polygon }` — GeoJSON Polygon coordinates |
 | `GET` | `/areas` | defined areas |
-| `GET` | `/health` | `{ status, database, postgis }` |
+| `GET` | `/health` | `{ status, database, postgis }` — 503 if degraded |
 
 ## Tests / load
 
@@ -75,7 +76,7 @@ k6 run load/inside-spam.js    # one user, many pings → 1 log
 k6 run load/many-users.js     # many users, first enter
 ```
 
-E2E needs `marti_location_test` (once):
+E2E needs `marti_location_test` locally (once):
 
 ```bash
 docker compose exec postgres psql -U marti -d postgres -c "CREATE DATABASE marti_location_test;"

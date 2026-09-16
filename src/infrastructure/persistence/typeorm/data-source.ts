@@ -1,3 +1,4 @@
+import { config as loadDotenv } from 'dotenv';
 import { ConfigService } from '@nestjs/config';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { loadAppConfig } from '../../config/env';
@@ -5,6 +6,8 @@ import { AreaOrmEntity } from './entities/area.orm-entity';
 import { AreaEntryLogOrmEntity } from './entities/area-entry-log.orm-entity';
 import { UserAreaPresenceOrmEntity } from './entities/user-area-presence.orm-entity';
 import { InitPostgis1730000000000 } from './migrations/1730000000000-InitPostgis';
+
+loadDotenv({ quiet: true });
 
 export function typeOrmOptions(
   config: ConfigService,
