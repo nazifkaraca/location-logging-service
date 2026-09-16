@@ -35,16 +35,23 @@ export class PostgresEntryLogQuery implements EntryLogQueryPort {
 
     const where = filters.length > 0 ? `WHERE ${filters.join(' AND ')}` : '';
 
-    const countRows = (await this.dataSource.query(
+    const countRows = await this.dataSource.query<Array<{ total: number }>>(
       `SELECT count(*)::int AS total FROM area_entry_logs ${where}`,
       params,
-    )) as Array<{ total: number }>;
+    );
 
     const listParams = [...params, limit, offset];
     const limitPlaceholder = `$${params.length + 1}`;
     const offsetPlaceholder = `$${params.length + 2}`;
 
-    const rows = (await this.dataSource.query(
+    const rows = await this.dataSource.query<
+      Array<{
+        id: string;
+        user_id: string;
+        area_id: string;
+        entered_at: Date;
+      }>
+    >(
       `
       SELECT id, user_id, area_id, entered_at
       FROM area_entry_logs
@@ -54,12 +61,7 @@ export class PostgresEntryLogQuery implements EntryLogQueryPort {
       OFFSET ${offsetPlaceholder}
       `,
       listParams,
-    )) as Array<{
-      id: string;
-      user_id: string;
-      area_id: string;
-      entered_at: Date;
-    }>;
+    );
 
     return {
       items: rows.map((row) => ({

@@ -2,10 +2,16 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CreateAreaUseCase } from '../../application/use-cases/create-area.use-case';
 import { ListAreasUseCase } from '../../application/use-cases/list-areas.use-case';
-import { boundingBoxPolygon } from '../../domain/geo/polygon';
+import {
+  boundingBoxPolygon,
+  type PolygonCoordinates,
+} from '../../domain/geo/polygon';
 import { loadAppConfig } from '../config/env';
 
-export const ISTANBUL_SEED = [
+export const ISTANBUL_SEED: ReadonlyArray<{
+  name: string;
+  polygon: PolygonCoordinates;
+}> = [
   {
     name: 'Kadıköy',
     polygon: boundingBoxPolygon(29.01, 40.975, 29.08, 41.02),
@@ -22,7 +28,7 @@ export const ISTANBUL_SEED = [
     name: 'Beyoğlu',
     polygon: boundingBoxPolygon(28.97, 41.03, 29.0, 41.045),
   },
-] as const;
+];
 
 @Injectable()
 export class SeedService implements OnModuleInit {
@@ -49,7 +55,7 @@ export class SeedService implements OnModuleInit {
     for (const area of ISTANBUL_SEED) {
       await this.createArea.execute({
         name: area.name,
-        polygon: area.polygon as number[][][],
+        polygon: area.polygon,
       });
     }
     this.logger.log(`Seeded ${ISTANBUL_SEED.length} Istanbul areas`);

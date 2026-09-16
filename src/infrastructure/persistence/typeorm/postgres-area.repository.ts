@@ -22,25 +22,25 @@ export class PostgresAreaRepository implements AreaRepository {
     name: string;
     polygon: PolygonCoordinates;
   }): Promise<Area> {
-    const rows = (await this.dataSource.query(
+    const rows = await this.dataSource.query<AreaRow[]>(
       `
       INSERT INTO areas (name, polygon)
       VALUES ($1, ST_SetSRID(ST_GeomFromGeoJSON($2), 4326))
       RETURNING id, name, created_at, ST_AsGeoJSON(polygon)::json AS polygon
       `,
       [input.name, toGeoJsonPolygon(input.polygon)],
-    )) as AreaRow[];
+    );
     return this.toArea(rows[0]);
   }
 
   async findAll(): Promise<Area[]> {
-    const rows = (await this.dataSource.query(
+    const rows = await this.dataSource.query<AreaRow[]>(
       `
       SELECT id, name, created_at, ST_AsGeoJSON(polygon)::json AS polygon
       FROM areas
       ORDER BY created_at DESC
       `,
-    )) as AreaRow[];
+    );
     return rows.map((row) => this.toArea(row));
   }
 

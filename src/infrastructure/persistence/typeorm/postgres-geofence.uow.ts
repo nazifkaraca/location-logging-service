@@ -12,7 +12,7 @@ class PostgresGeofenceSession implements GeofenceSession {
     longitude: number,
     latitude: number,
   ): Promise<string[]> {
-    const rows = (await this.manager.query(
+    const rows = await this.manager.query<Array<{ id: string }>>(
       `
       SELECT id
       FROM areas
@@ -22,20 +22,20 @@ class PostgresGeofenceSession implements GeofenceSession {
       )
       `,
       [longitude, latitude],
-    )) as Array<{ id: string }>;
+    );
     return rows.map((row) => row.id);
   }
 
   async listPresence(userId: string): Promise<string[]> {
-    const rows = (await this.manager.query(
+    const rows = await this.manager.query<Array<{ area_id: string }>>(
       `SELECT area_id FROM user_area_presence WHERE user_id = $1`,
       [userId],
-    )) as Array<{ area_id: string }>;
+    );
     return rows.map((row) => row.area_id);
   }
 
   async recordEnter(userId: string, areaId: string): Promise<boolean> {
-    const inserted = (await this.manager.query(
+    const inserted = await this.manager.query<Array<{ area_id: string }>>(
       `
       INSERT INTO user_area_presence (user_id, area_id)
       VALUES ($1, $2)
@@ -43,7 +43,7 @@ class PostgresGeofenceSession implements GeofenceSession {
       RETURNING area_id
       `,
       [userId, areaId],
-    )) as Array<{ area_id: string }>;
+    );
 
     if (inserted.length === 0) {
       return false;

@@ -3,6 +3,7 @@ process.env.SEED_ON_BOOT = 'false';
 
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import type { Server } from 'node:http';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { AppModule } from '../src/app.module';
@@ -12,6 +13,11 @@ import { configureApp } from '../src/interfaces/http/configure-app';
 describe('Martı Location Logging API (e2e)', () => {
   let app: INestApplication;
   let db: DataSource;
+
+  const api = () => {
+    const server = app.getHttpServer() as unknown as Server;
+    return request(server);
+  };
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -41,7 +47,7 @@ describe('Martı Location Logging API (e2e)', () => {
     east: number,
     north: number,
   ) {
-    const response = await request(app.getHttpServer())
+    const response = await api()
       .post('/areas')
       .send({ name, polygon: boundingBoxPolygon(west, south, east, north) })
       .expect(201);
@@ -49,7 +55,7 @@ describe('Martı Location Logging API (e2e)', () => {
   }
 
   async function ping(userId: string, latitude: number, longitude: number) {
-    const response = await request(app.getHttpServer())
+    const response = await api()
       .post('/locations')
       .send({ userId, latitude, longitude })
       .expect(200);
@@ -60,7 +66,7 @@ describe('Martı Location Logging API (e2e)', () => {
   }
 
   async function logCount(userId: string): Promise<number> {
-    const response = await request(app.getHttpServer())
+    const response = await api()
       .get('/logs')
       .query({ userId, limit: 100 })
       .expect(200);
@@ -68,9 +74,7 @@ describe('Martı Location Logging API (e2e)', () => {
   }
 
   it('GET /health reports database and PostGIS', async () => {
-    const response = await request(app.getHttpServer())
-      .get('/health')
-      .expect(200);
+    const response = await api().get('/health').expect(200);
     expect(response.body).toMatchObject({
       status: 'ok',
       database: true,
@@ -123,7 +127,7 @@ describe('Martı Location Logging API (e2e)', () => {
   });
 
   it('rejects an invalid polygon', async () => {
-    await request(app.getHttpServer())
+    await api()
       .post('/areas')
       .send({
         name: 'bowtie',
@@ -139,7 +143,7 @@ describe('Martı Location Logging API (e2e)', () => {
       })
       .expect(400);
 
-    await request(app.getHttpServer())
+    await api()
       .post('/areas')
       .send({
         name: 'open',
@@ -160,7 +164,7 @@ describe('Martı Location Logging API (e2e)', () => {
 
     const responses = await Promise.all(
       Array.from({ length: 20 }, () =>
-        request(app.getHttpServer())
+        api()
           .post('/locations')
           .send({ userId: 'race', latitude: 41.05, longitude: 29.05 }),
       ),
@@ -172,7 +176,8 @@ describe('Martı Location Logging API (e2e)', () => {
         (res.body as { enteredAreaIds: string[] }).enteredAreaIds.length > 0,
     );
     expect(entered).toHaveLength(1);
-    expect(entered[0].body.enteredAreaIds).toEqual([area.id]);
+    const winner = entered[0].body as { enteredAreaIds: string[] };
+    expect(winner.enteredAreaIds).toEqual([area.id]);
     expect(await logCount('race')).toBe(1);
   });
 

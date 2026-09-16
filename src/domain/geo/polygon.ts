@@ -24,8 +24,8 @@ function isPosition(value: unknown): value is [number, number] {
   if (!Array.isArray(value) || value.length < 2) {
     return false;
   }
-  const lng = value[0];
-  const lat = value[1];
+  const lng: unknown = value[0];
+  const lat: unknown = value[1];
   if (!isFiniteNumber(lng) || !isFiniteNumber(lat)) {
     return false;
   }
@@ -55,7 +55,7 @@ function validateRing(
 
   const positions: [number, number][] = [];
   for (let i = 0; i < ring.length; i += 1) {
-    const position = ring[i];
+    const position: unknown = ring[i];
     if (!isPosition(position)) {
       return {
         ok: false,

@@ -10,14 +10,16 @@ export class PostgresGeometryEngine implements GeometryEngine {
   async assertValidPolygon(geojson: string): Promise<void> {
     let validity: Array<{ valid: boolean; reason: string }>;
     try {
-      validity = (await this.dataSource.query(
+      validity = await this.dataSource.query<
+        Array<{ valid: boolean; reason: string }>
+      >(
         `
         SELECT
           ST_IsValid(ST_SetSRID(ST_GeomFromGeoJSON($1), 4326)) AS valid,
           ST_IsValidReason(ST_SetSRID(ST_GeomFromGeoJSON($1), 4326)) AS reason
         `,
         [geojson],
-      )) as Array<{ valid: boolean; reason: string }>;
+      );
     } catch {
       throw new InvalidPolygonError('polygon is not a valid geometry');
     }

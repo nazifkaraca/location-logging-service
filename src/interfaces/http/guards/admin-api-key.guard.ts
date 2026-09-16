@@ -19,9 +19,10 @@ export class AdminApiKeyGuard implements CanActivate {
       return true;
     }
 
-    const header = context.switchToHttp().getRequest<Request>().header(
-      'x-api-key',
-    );
+    const header = context
+      .switchToHttp()
+      .getRequest<Request>()
+      .header('x-api-key');
     if (header === undefined || header.length === 0) {
       throw new UnauthorizedException('X-API-Key is required');
     }

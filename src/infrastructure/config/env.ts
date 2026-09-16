@@ -63,7 +63,11 @@ function parsePositiveInt(raw: string, key: string, max: number): number {
 export function loadAppConfig(config: ConfigService): AppConfig {
   return {
     nodeEnv: optionalString(config, 'NODE_ENV', 'development'),
-    port: parsePositiveInt(optionalString(config, 'PORT', '43123'), 'PORT', 65535),
+    port: parsePositiveInt(
+      optionalString(config, 'PORT', '43123'),
+      'PORT',
+      65535,
+    ),
     seedOnBoot: optionalString(config, 'SEED_ON_BOOT', 'false') === 'true',
     apiKey: optionalApiKey(config),
     database: {

@@ -10,28 +10,29 @@ class InMemoryGeofence implements GeofenceUnitOfWork {
   logs: Array<{ userId: string; areaId: string }> = [];
   forcePresenceConflict = false;
 
-  async runInTransaction<T>(
+  runInTransaction<T>(
     work: (session: GeofenceSession) => Promise<T>,
   ): Promise<T> {
     const session: GeofenceSession = {
-      findContainingAreaIds: async () => [...this.containing],
-      listPresence: async (id) => [...(this.presence.get(id) ?? [])],
-      recordEnter: async (id, areaId) => {
+      findContainingAreaIds: () => Promise.resolve([...this.containing]),
+      listPresence: (id) => Promise.resolve([...(this.presence.get(id) ?? [])]),
+      recordEnter: (id, areaId) => {
         if (this.forcePresenceConflict) {
-          return false;
+          return Promise.resolve(false);
         }
         this.logs.push({ userId: id, areaId });
         const set = this.presence.get(id) ?? new Set<string>();
         set.add(areaId);
         this.presence.set(id, set);
-        return true;
+        return Promise.resolve(true);
       },
-      clearPresence: async (id, areaIds) => {
+      clearPresence: (id, areaIds) => {
         const set = this.presence.get(id) ?? new Set<string>();
         for (const areaId of areaIds) {
           set.delete(areaId);
         }
         this.presence.set(id, set);
+        return Promise.resolve();
       },
     };
     return work(session);

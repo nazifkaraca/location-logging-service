@@ -5,16 +5,20 @@ import { HealthProbe } from '../../domain/ports/health-probe.port';
 
 function probe(ok: boolean): HealthProbe {
   return {
-    check: async () =>
-      ok
-        ? { status: 'ok', database: true, postgis: true }
-        : { status: 'degraded', database: false, postgis: false },
+    check: () =>
+      Promise.resolve(
+        ok
+          ? { status: 'ok', database: true, postgis: true }
+          : { status: 'degraded', database: false, postgis: false },
+      ),
   };
 }
 
 describe('HealthController', () => {
   it('returns 200 when postgres and postgis are up', async () => {
-    const controller = new HealthController(new CheckHealthUseCase(probe(true)));
+    const controller = new HealthController(
+      new CheckHealthUseCase(probe(true)),
+    );
     const res = { status: jest.fn() };
     const body = await controller.check(res as never);
     expect(body.status).toBe('ok');

@@ -14,9 +14,9 @@ export class PostgresHealthProbe implements HealthProbe {
     try {
       await this.dataSource.query('SELECT 1');
       database = true;
-      const rows = (await this.dataSource.query(
+      const rows = await this.dataSource.query<Array<{ extname: string }>>(
         `SELECT extname FROM pg_extension WHERE extname = 'postgis'`,
-      )) as Array<{ extname: string }>;
+      );
       postgis = rows.length > 0;
     } catch {
       database = false;
