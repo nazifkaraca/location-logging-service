@@ -11,8 +11,8 @@ export type AppConfig = {
   nodeEnv: string;
   port: number;
   seedOnBoot: boolean;
-  /** When set, POST/GET /areas and GET /logs require header X-API-Key. */
-  apiKey?: string;
+  /** POST/GET /areas and GET /logs require header X-API-Key. */
+  apiKey: string;
   database: {
     host: string;
     port: number;
@@ -28,14 +28,6 @@ function requireString(config: ConfigService, key: string): string {
   const value = config.get<string>(key);
   if (value === undefined || value.trim() === '') {
     throw new MissingEnvError(key);
-  }
-  return value;
-}
-
-function optionalApiKey(config: ConfigService): string | undefined {
-  const value = config.get<string>('API_KEY');
-  if (value === undefined || value.trim() === '') {
-    return undefined;
   }
   return value;
 }
@@ -69,7 +61,7 @@ export function loadAppConfig(config: ConfigService): AppConfig {
       65535,
     ),
     seedOnBoot: optionalString(config, 'SEED_ON_BOOT', 'false') === 'true',
-    apiKey: optionalApiKey(config),
+    apiKey: requireString(config, 'API_KEY'),
     database: {
       host: requireString(config, 'DATABASE_HOST'),
       port: parsePositiveInt(

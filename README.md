@@ -11,7 +11,7 @@ Stack: NestJS, TypeScript, PostgreSQL + PostGIS, TypeORM.
 - **Enter only.** If the point lands inside a polygon the user was not already in (boundary counts), one row is written: `userId`, `areaId`, `entered_at`. Further pings while still inside do nothing. Leaving clears presence; there is no exit log.
 - **Logs.** `GET /logs` filters by user, area, time range, and page. Always `entered_at DESC`.
 - **Health.** `GET /health` checks Postgres and the PostGIS extension. HTTP 200 only when both are up; otherwise 503 and `{ status: "degraded", ... }`.
-- **Admin key.** If `API_KEY` is set, `POST/GET /areas` and `GET /logs` require `X-API-Key`. `POST /locations` stays open for device pings.
+- **Admin key.** `POST/GET /areas` and `GET /logs` require `X-API-Key`. `POST /locations` stays open for device pings.
 
 Raw pings are not stored, so spam while inside stays cheap: a spatial query and a presence read, usually no insert. Concurrent first-enters for the same user cannot double-log: presence is unique, and the log row is written only if that insert wins.
 
@@ -52,7 +52,8 @@ curl -s -X POST http://127.0.0.1:43123/locations \
   -H 'Content-Type: application/json' \
   -d '{"userId":"ali","latitude":40.996,"longitude":29.046}'
 
-curl -s 'http://127.0.0.1:43123/logs?userId=ali'
+curl -s 'http://127.0.0.1:43123/logs?userId=ali' \
+  -H 'X-API-Key: dev-local-key'
 ```
 
 `enteredAreaIds` is filled on the first call, empty on the second. Log count stays 1.

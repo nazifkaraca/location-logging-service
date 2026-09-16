@@ -8,6 +8,7 @@ const required = {
   DATABASE_USER: 'marti',
   DATABASE_PASSWORD: 'secret',
   DATABASE_NAME: 'marti_location',
+  API_KEY: 'correct',
 };
 
 function contextWithHeader(value: string | undefined): ExecutionContext {
@@ -22,15 +23,8 @@ function contextWithHeader(value: string | undefined): ExecutionContext {
 }
 
 describe('AdminApiKeyGuard', () => {
-  it('is a no-op when API_KEY is unset', () => {
+  it('rejects a missing or wrong key', () => {
     const guard = new AdminApiKeyGuard(new ConfigService(required));
-    expect(guard.canActivate(contextWithHeader(undefined))).toBe(true);
-  });
-
-  it('rejects a missing or wrong key when API_KEY is set', () => {
-    const guard = new AdminApiKeyGuard(
-      new ConfigService({ ...required, API_KEY: 'correct' }),
-    );
     expect(() => guard.canActivate(contextWithHeader(undefined))).toThrow(
       UnauthorizedException,
     );
@@ -40,9 +34,7 @@ describe('AdminApiKeyGuard', () => {
   });
 
   it('accepts the matching header', () => {
-    const guard = new AdminApiKeyGuard(
-      new ConfigService({ ...required, API_KEY: 'correct' }),
-    );
+    const guard = new AdminApiKeyGuard(new ConfigService(required));
     expect(guard.canActivate(contextWithHeader('correct'))).toBe(true);
   });
 });

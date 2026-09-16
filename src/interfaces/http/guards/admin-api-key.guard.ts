@@ -15,9 +15,6 @@ export class AdminApiKeyGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     const expected = loadAppConfig(this.config).apiKey;
-    if (expected === undefined) {
-      return true;
-    }
 
     const header = context
       .switchToHttp()

@@ -1,5 +1,6 @@
 process.env.DATABASE_NAME = 'marti_location_test';
 process.env.SEED_ON_BOOT = 'false';
+process.env.API_KEY = 'test-api-key';
 
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -49,6 +50,7 @@ describe('Martı Location Logging API (e2e)', () => {
   ) {
     const response = await api()
       .post('/areas')
+      .set('X-API-Key', 'test-api-key')
       .send({ name, polygon: boundingBoxPolygon(west, south, east, north) })
       .expect(201);
     return response.body as { id: string; name: string };
@@ -68,10 +70,20 @@ describe('Martı Location Logging API (e2e)', () => {
   async function logCount(userId: string): Promise<number> {
     const response = await api()
       .get('/logs')
+      .set('X-API-Key', 'test-api-key')
       .query({ userId, limit: 100 })
       .expect(200);
     return (response.body as { total: number }).total;
   }
+
+  it('rejects admin routes without X-API-Key', async () => {
+    await api().get('/logs').expect(401);
+    await api().get('/areas').expect(401);
+    await api()
+      .post('/areas')
+      .send({ name: 'x', polygon: boundingBoxPolygon(29, 41, 29.1, 41.1) })
+      .expect(401);
+  });
 
   it('GET /health reports database and PostGIS', async () => {
     const response = await api().get('/health').expect(200);
@@ -129,6 +141,7 @@ describe('Martı Location Logging API (e2e)', () => {
   it('rejects an invalid polygon', async () => {
     await api()
       .post('/areas')
+      .set('X-API-Key', 'test-api-key')
       .send({
         name: 'bowtie',
         polygon: [
@@ -145,6 +158,7 @@ describe('Martı Location Logging API (e2e)', () => {
 
     await api()
       .post('/areas')
+      .set('X-API-Key', 'test-api-key')
       .send({
         name: 'open',
         polygon: [

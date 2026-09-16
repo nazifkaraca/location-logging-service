@@ -2,6 +2,7 @@ import http from 'k6/http';
 import { check } from 'k6';
 
 const BASE = __ENV.BASE_URL || 'http://127.0.0.1:43123';
+const API_KEY = __ENV.API_KEY || 'dev-local-key';
 
 export const options = {
   scenarios: {
@@ -42,7 +43,9 @@ export function insideSpam(data) {
 }
 
 export function teardown(data) {
-  const res = http.get(`${BASE}/logs?userId=${data.userId}&limit=100`);
+  const res = http.get(`${BASE}/logs?userId=${data.userId}&limit=100`, {
+    headers: { 'X-API-Key': API_KEY },
+  });
   const body = res.json();
   if (body.total !== 1) {
     throw new Error(
