@@ -8,22 +8,11 @@ import {
 class PostgresGeofenceSession implements GeofenceSession {
   constructor(private readonly manager: EntityManager) {}
 
-  async findContainingAreaIds(
-    longitude: number,
-    latitude: number,
-  ): Promise<string[]> {
-    const rows = await this.manager.query<Array<{ id: string }>>(
-      `
-      SELECT id
-      FROM areas
-      WHERE ST_Covers(
-        polygon,
-        ST_SetSRID(ST_MakePoint($1, $2), 4326)
-      )
-      `,
-      [longitude, latitude],
+  async lockUser(userId: string): Promise<void> {
+    await this.manager.query(
+      `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`,
+      [userId],
     );
-    return rows.map((row) => row.id);
   }
 
   async listPresence(userId: string): Promise<string[]> {
@@ -73,6 +62,24 @@ class PostgresGeofenceSession implements GeofenceSession {
 @Injectable()
 export class PostgresGeofenceUnitOfWork implements GeofenceUnitOfWork {
   constructor(private readonly dataSource: DataSource) {}
+
+  async findContainingAreaIds(
+    longitude: number,
+    latitude: number,
+  ): Promise<string[]> {
+    const rows = await this.dataSource.query<Array<{ id: string }>>(
+      `
+      SELECT id
+      FROM areas
+      WHERE ST_Covers(
+        polygon,
+        ST_SetSRID(ST_MakePoint($1, $2), 4326)
+      )
+      `,
+      [longitude, latitude],
+    );
+    return rows.map((row) => row.id);
+  }
 
   runInTransaction<T>(
     work: (session: GeofenceSession) => Promise<T>,
