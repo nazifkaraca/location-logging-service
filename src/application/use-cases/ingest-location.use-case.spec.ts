@@ -9,12 +9,20 @@ class InMemoryGeofence implements GeofenceUnitOfWork {
   presence = new Map<string, Set<string>>();
   logs: Array<{ userId: string; areaId: string }> = [];
   forcePresenceConflict = false;
+  lockOrder: string[] = [];
+
+  findContainingAreaIds(): Promise<string[]> {
+    return Promise.resolve([...this.containing]);
+  }
 
   runInTransaction<T>(
     work: (session: GeofenceSession) => Promise<T>,
   ): Promise<T> {
     const session: GeofenceSession = {
-      findContainingAreaIds: () => Promise.resolve([...this.containing]),
+      lockUser: (id) => {
+        this.lockOrder.push(id);
+        return Promise.resolve();
+      },
       listPresence: (id) => Promise.resolve([...(this.presence.get(id) ?? [])]),
       recordEnter: (id, areaId) => {
         if (this.forcePresenceConflict) {
@@ -97,5 +105,19 @@ describe('IngestLocationUseCase', () => {
 
     expect(result.enteredAreaIds).toEqual([]);
     expect(geofence.logs).toHaveLength(0);
+  });
+
+  it('locks the user before reading presence', async () => {
+    const geofence = new InMemoryGeofence();
+    geofence.containing.add('kadikoy');
+    const useCase = new IngestLocationUseCase(geofence);
+
+    await useCase.execute({
+      userId: 'ali',
+      latitude: 40.99,
+      longitude: 29.03,
+    });
+
+    expect(geofence.lockOrder).toEqual(['ali']);
   });
 });

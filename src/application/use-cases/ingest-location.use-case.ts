@@ -5,12 +5,14 @@ import { GeofenceUnitOfWork } from '../../domain/ports/geofence-unit-of-work.por
 export class IngestLocationUseCase {
   constructor(private readonly geofence: GeofenceUnitOfWork) {}
 
-  execute(ping: LocationPing): Promise<LocationIngestResult> {
+  async execute(ping: LocationPing): Promise<LocationIngestResult> {
+    const containingIds = await this.geofence.findContainingAreaIds(
+      ping.longitude,
+      ping.latitude,
+    );
+
     return this.geofence.runInTransaction(async (session) => {
-      const containingIds = await session.findContainingAreaIds(
-        ping.longitude,
-        ping.latitude,
-      );
+      await session.lockUser(ping.userId);
       const previousIds = await session.listPresence(ping.userId);
       const { entered, exited } = diffAreaSets(previousIds, containingIds);
 
