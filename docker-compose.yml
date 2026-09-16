@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: marti-location-postgres
+    environment:
+      POSTGRES_USER: marti
+      POSTGRES_PASSWORD: marti
+      POSTGRES_DB: marti_location
+    ports:
+      - '5432:5432'
+    volumes:
+      - marti_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U marti -d marti_location']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  marti_pgdata:

@@ -1,0 +1,23 @@
+# compiled
+/dist
+/node_modules
+/coverage
+
+# env
+.env
+.env.local
+.env.*.local
+
+# logs
+*.log
+npm-debug.log*
+
+# os / ide
+.DS_Store
+.idea
+.vscode
+*.swp
+
+# local artifacts
+/uploads
+k6-results.json
